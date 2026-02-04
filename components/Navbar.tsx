@@ -1,63 +1,48 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+
+const tabs = [
+  { href: "/", label: "Dashboard" },
+  { href: "/predictions", label: "Predictions" },
+  { href: "/squares", label: "Squares" },
+  { href: "/food", label: "Food/Drinks" },
+  { href: "/halftime", label: "Halftime" },
+  { href: "/commercials", label: "Commercials" },
+  { href: "/bingo", label: "Bingo" },
+];
 
 export default function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  if (!mounted) return null; // 🚨 fixes hydration glitch
-
   return (
-    <nav className="flex items-center justify-between px-6 py-4 border-b border-white/10">
-      <div className="flex gap-6">
-        <Link href="/">Dashboard</Link>
-        <Link href="/predictions">Predictions</Link>
-        <Link href="/squares">Squares</Link>
-        <Link href="/food">Food & Drinks</Link>
-        <Link href="/halftime">Halftime</Link>
-        <Link href="/commercials">Commercials</Link>
-        <Link href="/bingo">Bingo</Link>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#081427]/95 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="h-9 w-9 rounded-xl bg-[#c60c30]" />
+          <div>
+            <div className="text-sm font-semibold tracking-wide text-white">
+              SUPER BOWL HQ
+            </div>
+            <div className="text-xs text-white/70">RBG Household Edition</div>
+          </div>
+        </div>
+
+        <nav className="hidden gap-4 md:flex">
+          {tabs.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className="text-sm text-white/80 hover:text-white"
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
       </div>
 
-      <div className="flex gap-4 items-center">
-        {user ? (
-          <>
-            <span className="opacity-70">{user.email}</span>
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = "/login";
-              }}
-              className="border px-3 py-1 rounded"
-            >
-              Log out
-            </button>
-          </>
-        ) : (
-          <Link href="/login" className="border px-3 py-1 rounded">
-            Login
-          </Link>
-        )}
+      {/* ESPN-ish ticker */}
+      <div className="border-t border-white/10 bg-black/40">
+        <div className="mx-auto max-w-6xl px-4 py-2 text-xs text-white/80">
+          🏈 Patriots vs Seahawks • Sun Feb 8, 2026 • 6:30 PM ET • Levi’s Stadium
+        </div>
       </div>
-    </nav>
+    </header>
   );
 }

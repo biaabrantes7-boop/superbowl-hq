@@ -1,6 +1,5 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import AuthGate from "@/components/AuthGate";
 
 export const metadata = {
   title: "Super Bowl HQ",
@@ -15,10 +14,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-[#07101f] text-white min-h-screen">
-        <AuthGate>
-          <Navbar />
-          <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
-        </AuthGate>
+        <Navbar />
+        <main className="max-w-7xl mx-auto px-6 py-8">
+          {children}
+        </main>
       </body>
     </html>
   );
