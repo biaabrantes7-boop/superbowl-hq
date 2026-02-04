@@ -1,97 +1,96 @@
 "use client";
 
+// components/Navbar.tsx
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { clearStoredName, getStoredName } from "@/lib/auth";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/" },
+const NAV = [
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Predictions", href: "/predictions" },
   { label: "Squares", href: "/squares" },
   { label: "Food & Drinks", href: "/food" },
-  { label: "Halftime", href: "/halftime" },
+  { label: "Halftime Show", href: "/halftime" },
   { label: "Commercials", href: "/commercials" },
   { label: "Bingo", href: "/bingo" },
 ];
 
 export default function Navbar() {
+  const [mounted, setMounted] = useState(false);
+  const [name, setName] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
 
-  const [name, setName] = useState<string | null>(null);
-  const [loggedIn, setLoggedIn] = useState(false);
-
-  // Read login state safely on the client
   useEffect(() => {
-    const ok = localStorage.getItem("rbg_passed") === "true";
-    const storedName = localStorage.getItem("rbg_name");
+    setMounted(true);
+    setName(getStoredName());
+  }, []);
 
-    setLoggedIn(ok);
-    setName(storedName);
-  }, [pathname]);
+  // if name changes in another tab, update
+  useEffect(() => {
+    const onStorage = () => setName(getStoredName());
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
-  function logout() {
-    localStorage.removeItem("rbg_passed");
-    localStorage.removeItem("rbg_name");
+  if (!mounted) return null;
 
-    setLoggedIn(false);
-    setName(null);
-
-    router.replace("/login");
-  }
+  const isActive = (href: string) =>
+    pathname === href || (href !== "/" && pathname?.startsWith(href));
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07101f]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        {/* LEFT: Logo + Nav */}
-        <div className="flex items-center gap-8">
-          <div className="leading-tight">
-            <div className="font-bold tracking-wide">SUPER BOWL HQ</div>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07101f]/80 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-10">
+          <Link href="/dashboard" className="leading-tight">
+            <div className="text-lg font-semibold tracking-wide text-white">
+              SUPER BOWL HQ
+            </div>
             <div className="text-xs text-white/60">RBG Household</div>
-          </div>
+          </Link>
 
-          {/* Tabs */}
-          <nav className="hidden md:flex items-center gap-6">
-            {NAV_ITEMS.map((item) => {
-              const active = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={[
-                    "text-sm transition",
-                    active
-                      ? "text-white font-semibold"
-                      : "text-white/60 hover:text-white",
-                  ].join(" ")}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+          <nav className="hidden gap-5 md:flex">
+            {NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  "text-sm text-white/70 hover:text-white transition",
+                  isActive(item.href) ? "text-white font-semibold" : "",
+                ].join(" ")}
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </div>
 
-        {/* RIGHT: User + Actions */}
-        <div className="flex items-center gap-4">
-          {loggedIn && name && (
-            <div className="text-sm text-white/70">👤 {name}</div>
-          )}
+        <div className="flex items-center gap-3">
+          {name ? (
+            <>
+              <div className="hidden sm:flex items-center gap-2 text-sm text-white/80">
+                <span className="opacity-70">👤</span> {name}
+              </div>
 
-          {!loggedIn ? (
-            <button
-              onClick={() => router.push("/login")}
-              className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/10"
+              <button
+                onClick={() => {
+                  clearStoredName();
+                  setName(null);
+                  router.replace("/login");
+                }}
+                className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <Link
+              href={`/login?next=${encodeURIComponent(pathname || "/dashboard")}`}
+              className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10"
             >
               Login
-            </button>
-          ) : (
-            <button
-              onClick={logout}
-              className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/10"
-            >
-              Log out
-            </button>
+            </Link>
           )}
         </div>
       </div>

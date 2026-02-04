@@ -1,37 +1,24 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+// components/AuthGate.tsx
 import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { getStoredName } from "@/lib/auth";
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // ✅ Always allow the login page
-    if (pathname === "/login") {
-      setReady(true);
+    const name = getStoredName();
+    if (!name) {
+      router.replace(`/login?next=${encodeURIComponent(pathname || "/dashboard")}`);
       return;
     }
-
-    const ok = localStorage.getItem("rbg_passed") === "true";
-    if (!ok) {
-      router.replace("/login");
-      return;
-    }
-
     setReady(true);
-  }, [pathname, router]);
+  }, [router, pathname]);
 
-  // Simple loading state so it doesn't flash
-  if (!ready) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-white/70">
-        Loading…
-      </div>
-    );
-  }
-
+  if (!ready) return null; // prevents hydration mismatch + flashing
   return <>{children}</>;
 }

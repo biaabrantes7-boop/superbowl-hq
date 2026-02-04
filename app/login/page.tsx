@@ -1,111 +1,86 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+// app/login/page.tsx
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { getStoredName, setStoredName } from "@/lib/auth";
 
-const PASSCODE = "RBG2027";
+const ACCESS_CODE = "RBG2027"; // change this if you want
 
 export default function LoginPage() {
   const router = useRouter();
-  const [pass, setPass] = useState("");
+  const params = useSearchParams();
+
+  const nextPath = useMemo(() => params.get("next") || "/dashboard", [params]);
+
   const [name, setName] = useState("");
+  const [code, setCode] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const [current, setCurrent] = useState<string | null>(null);
 
+  // if already logged in, go straight to next
   useEffect(() => {
-    // Show who is currently "logged in" (if anyone)
-    const ok = localStorage.getItem("rbg_passed") === "true";
-    const n = localStorage.getItem("rbg_name");
-    setCurrent(ok ? n : null);
-  }, []);
+    const existing = getStoredName();
+    if (existing) router.replace(nextPath);
+  }, [router, nextPath]);
 
-  function resetLogin() {
-    localStorage.removeItem("rbg_passed");
-    localStorage.removeItem("rbg_name");
-    setCurrent(null);
-    setPass("");
-    setName("");
-    setErr(null);
-  }
-
-  function submit(e: React.FormEvent) {
+  const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
 
-    if (pass.trim() !== PASSCODE) return setErr("Wrong code 😭");
-    if (!name.trim()) return setErr("Enter your name!");
+    if (code.trim() !== ACCESS_CODE) {
+      setErr("Wrong access code 😈");
+      return;
+    }
 
-    localStorage.setItem("rbg_passed", "true");
-    localStorage.setItem("rbg_name", name.trim());
+    if (!name.trim()) {
+      setErr("Enter your name plz");
+      return;
+    }
 
-    router.replace("/");
-  }
+    setStoredName(name.trim());
+    router.replace(nextPath);
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-white">
-        <h1 className="text-2xl font-bold">Super Bowl HQ</h1>
-        <p className="mt-1 text-white/60">Enter the code + your name.</p>
+    <div className="flex min-h-[70vh] items-center justify-center">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6">
+        <h1 className="text-2xl font-semibold">Login</h1>
+        <p className="mt-1 text-sm text-white/70">
+          Enter your name + the secret code to enter Super Bowl HQ.
+        </p>
 
-        {current && (
-          <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-4 text-sm">
-            <div className="text-white/70">
-              Currently logged in as: <span className="font-semibold text-white">{current}</span>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <button
-                onClick={() => router.replace("/")}
-                className="flex-1 rounded-xl bg-white/10 px-4 py-2 hover:bg-white/20"
-              >
-                Continue
-              </button>
-              <button
-                onClick={resetLogin}
-                className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-2 hover:bg-white/10"
-              >
-                Switch user
-              </button>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={submit} className="mt-6 space-y-4">
-          <div>
-            <label className="text-sm text-white/70">Passcode</label>
-            <input
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none"
-              placeholder="RBG2027"
-            />
-          </div>
-
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div>
             <label className="text-sm text-white/70">Name</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="mt-2 w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 outline-none"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 outline-none"
               placeholder="Bianca"
             />
           </div>
 
+          <div>
+            <label className="text-sm text-white/70">Access code</label>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 outline-none"
+              placeholder="RBG2027"
+            />
+          </div>
+
           {err && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
               {err}
             </div>
           )}
 
-          <button className="w-full rounded-xl bg-white/10 px-4 py-3 font-semibold hover:bg-white/20">
-            Enter
-          </button>
-
           <button
-            type="button"
-            onClick={resetLogin}
-            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/80 hover:bg-white/10"
+            type="submit"
+            className="w-full rounded-xl bg-white px-4 py-2 font-semibold text-black hover:opacity-90"
           >
-            Reset login
+            Enter
           </button>
         </form>
       </div>
