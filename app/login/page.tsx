@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const PASSCODE = "RBG2027";
 
@@ -10,6 +10,23 @@ export default function LoginPage() {
   const [pass, setPass] = useState("");
   const [name, setName] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [current, setCurrent] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Show who is currently "logged in" (if anyone)
+    const ok = localStorage.getItem("rbg_passed") === "true";
+    const n = localStorage.getItem("rbg_name");
+    setCurrent(ok ? n : null);
+  }, []);
+
+  function resetLogin() {
+    localStorage.removeItem("rbg_passed");
+    localStorage.removeItem("rbg_name");
+    setCurrent(null);
+    setPass("");
+    setName("");
+    setErr(null);
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,14 +43,33 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6">
-      <form
-        onSubmit={submit}
-        className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6"
-      >
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-white">
         <h1 className="text-2xl font-bold">Super Bowl HQ</h1>
         <p className="mt-1 text-white/60">Enter the code + your name.</p>
 
-        <div className="mt-6 space-y-4">
+        {current && (
+          <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-4 text-sm">
+            <div className="text-white/70">
+              Currently logged in as: <span className="font-semibold text-white">{current}</span>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => router.replace("/")}
+                className="flex-1 rounded-xl bg-white/10 px-4 py-2 hover:bg-white/20"
+              >
+                Continue
+              </button>
+              <button
+                onClick={resetLogin}
+                className="flex-1 rounded-xl border border-white/10 bg-black/30 px-4 py-2 hover:bg-white/10"
+              >
+                Switch user
+              </button>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={submit} className="mt-6 space-y-4">
           <div>
             <label className="text-sm text-white/70">Passcode</label>
             <input
@@ -63,8 +99,16 @@ export default function LoginPage() {
           <button className="w-full rounded-xl bg-white/10 px-4 py-3 font-semibold hover:bg-white/20">
             Enter
           </button>
-        </div>
-      </form>
+
+          <button
+            type="button"
+            onClick={resetLogin}
+            className="w-full rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-sm text-white/80 hover:bg-white/10"
+          >
+            Reset login
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
