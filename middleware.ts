@@ -1,6 +1,4 @@
 "use client";
-document.cookie = `rbg_passed=true; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
-document.cookie = "rbg_passed=; path=/; max-age=0";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";

@@ -1,14 +1,53 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-const KICKOFF = new Date("2026-02-08T18:30:00-05:00");
+// ────────────────────────────────────────────────
+// Countdown (client-only component)
+// ────────────────────────────────────────────────
+function Countdown() {
+  const [now, setNow] = useState(new Date());
 
-/**
- * ✅ EDIT THESE NUMBERS/PLAYERS/INJURIES ANYTIME.
- * This is your "producer notes" area.
- */
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const KICKOFF = new Date("2026-02-08T18:30:00-05:00");
+  const diff = KICKOFF.getTime() - now.getTime();
+  const isLive = diff <= 0;
+
+  const countdownText = isLive
+    ? "LIVE"
+    : (() => {
+        const total = Math.max(0, Math.floor(diff / 1000));
+        const d = Math.floor(total / 86400);
+        const h = Math.floor((total % 86400) / 3600);
+        const m = Math.floor((total % 3600) / 60);
+        const s = total % 60;
+        return `${d}d ${h}h ${m}m ${s}s`;
+      })();
+
+  return (
+    <div
+      className={[
+        "mt-1 rounded-md px-3 py-1 text-sm font-bold",
+        isLive
+          ? "bg-red-600 text-white animate-pulse"
+          : "bg-white/10 text-white",
+      ].join(" ")}
+    >
+      {countdownText}
+    </div>
+  );
+}
+
+// ────────────────────────────────────────────────
+// Main page
+// ────────────────────────────────────────────────
+const KICKOFF = new Date("2026-02-08T18:30:00-05:00"); // kept here for reference
+
 const TEAMS = {
   patriots: {
     short: "Patriots",
@@ -56,26 +95,6 @@ const TEAMS = {
 };
 
 export default function DashboardPage() {
-  const [now, setNow] = useState<Date>(new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const diff = KICKOFF.getTime() - now.getTime();
-  const isLive = diff <= 0;
-
-  const countdownText = useMemo(() => {
-    if (isLive) return "LIVE";
-    const total = Math.max(0, Math.floor(diff / 1000));
-    const d = Math.floor(total / 86400);
-    const h = Math.floor((total % 86400) / 3600);
-    const m = Math.floor((total % 3600) / 60);
-    const s = total % 60;
-    return `${d}d ${h}h ${m}m ${s}s`;
-  }, [diff, isLive]);
-
   return (
     <div className="space-y-10 text-white">
       {/* ================= SCOREBUG ================= */}
@@ -95,16 +114,7 @@ export default function DashboardPage() {
                 SUPER BOWL LX
               </div>
 
-              <div
-                className={[
-                  "mt-1 rounded-md px-3 py-1 text-sm font-bold",
-                  isLive
-                    ? "bg-red-600 text-white animate-pulse"
-                    : "bg-white/10 text-white",
-                ].join(" ")}
-              >
-                {countdownText}
-              </div>
+              <Countdown /> {/* ← This replaces the old problematic div */}
 
               <div className="mt-1 text-xs text-white/60">
                 Sun, Feb 8, 2026 • 6:30 PM ET
