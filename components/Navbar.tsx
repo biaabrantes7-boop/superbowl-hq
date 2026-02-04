@@ -4,12 +4,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-const NAV = [
+const NAV_ITEMS = [
   { label: "Dashboard", href: "/" },
   { label: "Predictions", href: "/predictions" },
   { label: "Squares", href: "/squares" },
   { label: "Food & Drinks", href: "/food" },
-  { label: "Halftime Show", href: "/halftime" },
+  { label: "Halftime", href: "/halftime" },
   { label: "Commercials", href: "/commercials" },
   { label: "Bingo", href: "/bingo" },
 ];
@@ -17,38 +17,42 @@ const NAV = [
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [name, setName] = useState<string>("");
 
+  const [name, setName] = useState<string | null>(null);
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  // Read login state safely on the client
   useEffect(() => {
-    // If you're saving the selected name somewhere, read it here.
-    // Change these keys if yours are different.
-    const storedName =
-      localStorage.getItem("rbg_name") ||
-      localStorage.getItem("name") ||
-      "";
+    const ok = localStorage.getItem("rbg_passed") === "true";
+    const storedName = localStorage.getItem("rbg_name");
+
+    setLoggedIn(ok);
     setName(storedName);
-  }, []);
+  }, [pathname]);
 
   function logout() {
-    // Clear whatever you store for login
-    localStorage.removeItem("rbg_authed");
+    localStorage.removeItem("rbg_passed");
     localStorage.removeItem("rbg_name");
-    localStorage.removeItem("name");
-    router.push("/login");
-    router.refresh();
+
+    setLoggedIn(false);
+    setName(null);
+
+    router.replace("/login");
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#070f1f]/90 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-6">
-          <div>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07101f]/90 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        {/* LEFT: Logo + Nav */}
+        <div className="flex items-center gap-8">
+          <div className="leading-tight">
             <div className="font-bold tracking-wide">SUPER BOWL HQ</div>
             <div className="text-xs text-white/60">RBG Household</div>
           </div>
 
-          <nav className="hidden gap-5 md:flex">
-            {NAV.map((item) => {
+          {/* Tabs */}
+          <nav className="hidden md:flex items-center gap-6">
+            {NAV_ITEMS.map((item) => {
               const active = pathname === item.href;
               return (
                 <Link
@@ -56,7 +60,9 @@ export default function Navbar() {
                   href={item.href}
                   className={[
                     "text-sm transition",
-                    active ? "text-white font-semibold" : "text-white/60 hover:text-white",
+                    active
+                      ? "text-white font-semibold"
+                      : "text-white/60 hover:text-white",
                   ].join(" ")}
                 >
                   {item.label}
@@ -66,22 +72,27 @@ export default function Navbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          {name ? <div className="text-sm text-white/70">{name}</div> : null}
+        {/* RIGHT: User + Actions */}
+        <div className="flex items-center gap-4">
+          {loggedIn && name && (
+            <div className="text-sm text-white/70">👤 {name}</div>
+          )}
 
-          <button
-            onClick={() => router.push("/login")}
-            className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
-          >
-            Login
-          </button>
-
-          <button
-            onClick={logout}
-            className="rounded-lg border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:bg-white/10"
-          >
-            Log out
-          </button>
+          {!loggedIn ? (
+            <button
+              onClick={() => router.push("/login")}
+              className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/10"
+            >
+              Login
+            </button>
+          ) : (
+            <button
+              onClick={logout}
+              className="rounded-lg border border-white/15 px-4 py-2 text-sm hover:bg-white/10"
+            >
+              Log out
+            </button>
+          )}
         </div>
       </div>
     </header>
